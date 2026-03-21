@@ -1,59 +1,38 @@
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
+
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Chat from "./pages/Chat";
 import Dashboard from "./pages/dashboard";
+import Chat from "./pages/Chat";
 
-// ✅ Protected Route Component
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem("token");
+import MainLayout from "./layouts/MainLayout";
+import ProtectedRoutes from "./components/routes/ProtectedRoutes";
 
-  if (!token) {
-    return <Navigate to="/login" />;
-  }
-
-  return <>{children}</>;
-}
-
-function AppRoutes() {
-  const location = useLocation();
-
+/* Layout Wrapper */
+function LayoutWrapper() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-
-      {/* ✅ Protected Routes */}
-      <Route
-        path="/chat"
-        element={
-          <ProtectedRoute>
-            <Chat key={location.key} />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ✅ Default Route */}
-      <Route path="*" element={<Navigate to="/login" />} />
-    </Routes>
+    <ProtectedRoutes>
+      <MainLayout>
+        <Outlet />
+      </MainLayout>
+    </ProtectedRoutes>
   );
 }
 
-function App() {
+export default function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <Router>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        {/* Protected Routes with Layout */}
+        <Route element={<LayoutWrapper />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/chat" element={<Chat />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 }
-
-export default App;

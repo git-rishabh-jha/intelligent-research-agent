@@ -11,8 +11,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(false);
 
+  const username = localStorage.getItem("username") || "User";
+  const firstLetter = username.charAt(0).toUpperCase();
+
   const isDashboard = location.pathname === "/dashboard";
   const isChat = location.pathname === "/chat";
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+
+    navigate("/", { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex">
@@ -22,7 +32,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
         {/* Top Section */}
         <div>
-
           {/* Doc Dashboard Button */}
           <div className="p-4">
             <button
@@ -85,10 +94,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
             className="w-full flex items-center gap-3 hover:bg-slate-800 p-2 rounded-lg transition"
           >
             <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-semibold text-black">
-              RJ
+              {firstLetter}
             </div>
             <div className="text-left">
-              <p className="text-sm font-medium">Rishabh Jha</p>
+              <p className="text-sm font-medium">{username}</p>
               <p className="text-xs text-slate-400">Pro Plan</p>
             </div>
           </button>
@@ -97,7 +106,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           {openMenu && (
             <div className="absolute bottom-16 left-4 right-4 bg-slate-800 border border-slate-700 rounded-lg shadow-lg overflow-hidden">
               <button
-                onClick={() => navigate("/")}
+                onClick={handleLogout}
                 className="w-full text-left px-4 py-3 text-sm hover:bg-slate-700 transition"
               >
                 Logout

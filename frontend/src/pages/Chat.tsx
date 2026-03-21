@@ -1,5 +1,4 @@
 import { useState } from "react";
-import MainLayout from "../layouts/MainLayout";
 import ChatWindow from "../components/chat/ChatWindow";
 import ChatInput from "../components/chat/ChatInput";
 
@@ -7,7 +6,6 @@ export default function Chat() {
   const [chatStarted, setChatStarted] = useState(false);
 
   return (
-    <MainLayout>
       <div className="h-full flex flex-col">
 
         {!chatStarted ? (
@@ -42,6 +40,5 @@ export default function Chat() {
         )}
 
       </div>
-    </MainLayout>
   );
 }

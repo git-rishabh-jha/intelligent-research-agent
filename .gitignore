@@ -1,0 +1,25 @@
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+.env
+
+# Uploads
+uploads/
+
+# Database
+*.db
+
+# Vite
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+#VS CODE 
+.vscode

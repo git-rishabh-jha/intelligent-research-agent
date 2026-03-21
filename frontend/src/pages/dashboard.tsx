@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from "react";
-import MainLayout from "../layouts/MainLayout";
 import DocumentTile from "../components/ui/DocumentTile";
 import {
   fetchDocuments,
@@ -167,7 +166,6 @@ export default function Dashboard() {
   };
 
   return (
-    <MainLayout>
       <div className="flex flex-col h-full">
 
         {/* HEADER */}
@@ -321,6 +319,5 @@ export default function Dashboard() {
         )}
 
       </div>
-    </MainLayout>
   );
 }
