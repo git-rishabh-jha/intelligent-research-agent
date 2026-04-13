@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 class UserCreate(BaseModel):
     username: str
@@ -21,7 +22,7 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes: True
+        from_attributes = True
 
 class DocumentResponse(BaseModel):
     id: int
@@ -33,3 +34,20 @@ class DocumentResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class EmbeddingStatusResponse(BaseModel):
+    document_id: int
+    is_indexed: int
+    chunk_count: int
+    indexed_at: Optional[datetime]
+    error_message: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+class DocumentQuestionRequest(BaseModel):
+    question: str
+
+class DocumentChatResponse(BaseModel):
+    answer: str
+    doc_id: int

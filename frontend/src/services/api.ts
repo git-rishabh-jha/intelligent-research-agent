@@ -61,10 +61,66 @@ export const uploadDocument = async (file: File) => {
 };
 
 export const deleteDocument = async (id: number) => {
-  await fetch(`${API_BASE}/documents/${id}`, {
+  const res = await fetch(`${API_BASE}/documents/${id}`, {
     method: "DELETE",
     headers: {
-      Authorization: `Bearer ${getToken()}`
-    }
+      Authorization: `Bearer ${getToken()}`,
+    },
   });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Delete failed" }));
+    throw new Error(err.detail || "Delete failed");
+  }
+};
+
+// ---------------------------------------------------------------------------
+// RAG – document index status
+// ---------------------------------------------------------------------------
+
+export interface EmbeddingStatus {
+  document_id: number;
+  /** 0 = pending, 1 = indexed, 2 = failed */
+  is_indexed: 0 | 1 | 2;
+  chunk_count: number;
+  indexed_at: string | null;
+  error_message: string | null;
+}
+
+export const getIndexStatus = async (docId: number): Promise<EmbeddingStatus> => {
+  const res = await fetch(`${API_BASE}/documents/index-status/${docId}`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Failed to fetch index status");
+  }
+  return res.json();
+};
+
+// ---------------------------------------------------------------------------
+// RAG – document chat
+// ---------------------------------------------------------------------------
+
+export interface DocumentChatResponse {
+  answer: string;
+  doc_id: number;
+}
+
+export const chatWithDocument = async (
+  docId: number,
+  question: string
+): Promise<DocumentChatResponse> => {
+  const res = await fetch(`${API_BASE}/chat/document/${docId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ question }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Chat request failed");
+  }
+  return res.json();
 };
