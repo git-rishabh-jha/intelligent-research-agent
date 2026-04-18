@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine, SessionLocal
 from app.models import Base
-from app.routes import auth, documents, chat, arxiv
+from app.routes import auth, documents, chat, arxiv, summarize
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(chat.router)
 app.include_router(arxiv.router)
+app.include_router(summarize.router)
 
 
 @app.on_event("startup")

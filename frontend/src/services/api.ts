@@ -124,3 +124,44 @@ export const chatWithDocument = async (
   }
   return res.json();
 };
+
+// ---------------------------------------------------------------------------
+// Summarization
+// ---------------------------------------------------------------------------
+
+export interface SummaryResponse {
+  content: string;
+  summary_type: string;
+}
+
+/** Returns cached summary, or generates + caches on first call (may be slow). */
+export const getFullSummary = async (docId: number): Promise<SummaryResponse> => {
+  const res = await fetch(`${API_BASE}/summarize/${docId}/full`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Full summary generation failed");
+  }
+  return res.json();
+};
+
+export const summarizeSelectedText = async (
+  docId: number,
+  selectedText: string
+): Promise<SummaryResponse> => {
+  const res = await fetch(`${API_BASE}/summarize/${docId}/text`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ selected_text: selectedText }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Text summarization failed");
+  }
+  return res.json();
+};

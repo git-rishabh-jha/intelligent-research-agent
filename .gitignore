@@ -23,3 +23,6 @@ Thumbs.db
 
 #VS CODE 
 .vscode
+
+# document store
+/faiss_store

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import DocumentTile from "../components/ui/DocumentTile";
 import DocChatPanel from "../components/chat/DocChatPanel";
+import SummarizePanel from "../components/chat/SummarizePanel";
 import {
   fetchDocuments,
   uploadDocument,
@@ -31,8 +32,12 @@ export default function Dashboard() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Doc-chat panel visibility
-  const [showDocChat, setShowDocChat] = useState(false);
+  // Right-side panel: "chat" | "summarize" | null (mutually exclusive)
+  const [activePanel, setActivePanel] = useState<"chat" | "summarize" | null>(null);
+
+  // Convenience aliases kept for readability
+  const showDocChat = activePanel === "chat";
+  const showSummarize = activePanel === "summarize";
 
   const username = localStorage.getItem("username");
 
@@ -111,7 +116,7 @@ export default function Dashboard() {
 
       setSelectedDoc(doc);
       setFileUrl(url);
-      setShowDocChat(false); // reset panel when opening a new doc
+      setActivePanel(null); // reset panel when opening a new doc
       setCurrentPage(1);
     } catch (err: any) {
       console.error(err);
@@ -159,7 +164,7 @@ export default function Dashboard() {
     setSelectedDoc(null);
     setFileUrl(null);
     setCurrentPage(1);
-    setShowDocChat(false);
+    setActivePanel(null);
   };
 
   return (
@@ -254,9 +259,23 @@ export default function Dashboard() {
 
             {/* Right: actions */}
             <div className="flex gap-3 items-center flex-shrink-0">
+              {/* Summarize toggle button */}
+              <button
+                onClick={() => setActivePanel(showSummarize ? null : "summarize")}
+                title={showSummarize ? "Close summarize panel" : "Summarize this paper"}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition ${
+                  showSummarize
+                    ? "bg-emerald-600 text-white"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
+              >
+                <span>📄</span>
+                <span>{showSummarize ? "Close Summary" : "Summarize"}</span>
+              </button>
+
               {/* Chat toggle button */}
               <button
-                onClick={() => setShowDocChat((v) => !v)}
+                onClick={() => setActivePanel(showDocChat ? null : "chat")}
                 title={showDocChat ? "Close document chat" : "Chat about this paper"}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition ${
                   showDocChat
@@ -335,12 +354,18 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Doc Chat Panel (right side) */}
+            {/* Right-side panel (mutually exclusive: chat OR summarize) */}
             {showDocChat && (
               <DocChatPanel
                 docId={selectedDoc.id}
                 docName={selectedDoc.filename}
-                onClose={() => setShowDocChat(false)}
+                onClose={() => setActivePanel(null)}
+              />
+            )}
+            {showSummarize && (
+              <SummarizePanel
+                docId={selectedDoc.id}
+                onClose={() => setActivePanel(null)}
               />
             )}
           </div>

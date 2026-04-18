@@ -37,7 +37,7 @@ from app.utils.faiss_store import save_document, count_chunks, query_similar_chu
 logger = logging.getLogger(__name__)
 IST = ZoneInfo("Asia/Kolkata")
 
-TOP_K = 5  # number of chunks retrieved from FAISS and passed directly to the LLM
+TOP_K = 7  # number of chunks retrieved from FAISS and passed directly to the LLM
 
 
 # ---------------------------------------------------------------------------
@@ -129,7 +129,7 @@ def _index_document(doc_id: int, filepath: str, db: Session) -> None:
                 "or password-protected."
             )
 
-        chunks = chunk_text(text, chunk_size=300, overlap=100)
+        chunks = chunk_text(text, chunk_size=800, overlap=150)
         if not chunks:
             raise ValueError("Text was extracted but no valid chunks were produced.")
 
@@ -170,18 +170,19 @@ def _index_document(doc_id: int, filepath: str, db: Session) -> None:
 # ---------------------------------------------------------------------------
 
 _SYSTEM_PROMPT = (
-    "You are a precise research-paper assistant. "
-    "Answer the user's question using ONLY the context excerpts provided below. "
-    "Cite specific details from the excerpts when possible. "
-    "If the excerpts do not contain enough information to answer the question, "
-    "say so clearly rather than guessing or hallucinating."
+    "You are a helpful research paper assistant. "
+    "The user will give you passages from a paper and ask a question. "
+    "Write a clear, direct answer in plain prose — do NOT list or enumerate the passages. "
+    "Synthesise the information into a single coherent response. "
+    "If the passages do not contain enough information to answer, say: "
+    "'The document does not appear to cover this in the sections I retrieved.'"
 )
 
 
 def query_document(doc_id: int, question: str) -> str:
     """
     Answer `question` about `doc_id` using vanilla RAG:
-      embed question → FAISS top-5 cosine similarity → LLM answer.
+      embed question → FAISS top-k cosine similarity → LLM answer.
     Never raises — errors are returned as user-readable strings.
     """
     try:
@@ -203,18 +204,22 @@ def query_document(doc_id: int, question: str) -> str:
         if not top_chunks:
             return "No relevant passages were found in this document for your question."
 
-        context = "\n\n---\n\n".join(
-            f"[Excerpt {i + 1}]\n{chunk}" for i, chunk in enumerate(top_chunks)
-        )
+        # Plain separator — no [Excerpt N] labels, which cause the model to
+        # address each passage separately instead of synthesising an answer.
+        context = "\n\n---\n\n".join(top_chunks)
         prompt = (
-            f"Context excerpts from the document:\n\n"
+            f"Here are relevant passages from the research paper:\n\n"
             f"{context}\n\n"
             f"Question: {question}\n\n"
             f"Answer:"
         )
 
         try:
-            answer = ollama_client.generate(prompt, system=_SYSTEM_PROMPT)
+            answer = ollama_client.generate(
+                prompt,
+                system=_SYSTEM_PROMPT,
+                num_predict=300,
+            )
         except Exception as e:
             return (
                 f"Could not reach Ollama for answer generation: {e}. "
