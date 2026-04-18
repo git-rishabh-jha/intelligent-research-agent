@@ -238,19 +238,7 @@ User Query
 
 ---
 
-## 🔭 Potential Enhancements
-
-- [ ] ArXiv paper search and one-click import
-- [ ] Streaming LLM responses (SSE)
-- [ ] Multi-user document sharing
-- [ ] Export chat transcripts as PDF
-- [ ] Reranking retrieved chunks with a cross-encoder model
-- [ ] Mobile-responsive layout
-
----
-
 ## 👤 Author
 
 **Rishabh Jha**
 
-> Built as a full-stack AI engineering project demonstrating end-to-end LLM integration, retrieval-augmented generation, and modern web development — all running locally without any cloud dependency.
