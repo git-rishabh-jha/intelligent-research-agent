@@ -1,102 +1,60 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 
-interface ChatInputProps {
-  onFirstMessage?: () => void;
-  showUpload?: boolean;
+interface Props {
+  onSend: (text: string) => void;
+  loading: boolean;
+  placeholder?: string;
 }
 
-export default function ChatInput({ onFirstMessage, showUpload=false }: ChatInputProps) {
+export default function ChatInput({
+  onSend,
+  loading,
+  placeholder = "Ask about your research papers…",
+}: Props) {
   const [message, setMessage] = useState("");
-  const [openMenu, setOpenMenu] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const canSend = message.trim().length > 0 && !loading;
 
   const handleSend = () => {
-    if (!message.trim()) return;
-
-    if (onFirstMessage) {
-      onFirstMessage();
-    }
-
-    console.log("Message:", message);
+    if (!canSend) return;
+    onSend(message.trim());
     setMessage("");
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-    setOpenMenu(false);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      console.log("Uploaded file:", file.name);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
-  const handleArxivClick = () => {
-    console.log("arXiv option selected");
-    setOpenMenu(false);
-  };
-
   return (
-    <div className="relative">
-      
-      <div className="flex items-center bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 w-full">
-
-        {/* + Button */}
-        {showUpload && (
-          <button
-            onClick={() => setOpenMenu(!openMenu)}
-            className="mr-3 text-emerald-400 text-xl hover:text-emerald-300 transition"
-          >
-            +
-          </button>
+    <div className="flex items-center bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 gap-3 focus-within:border-emerald-600 transition-colors">
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={handleKeyDown}
+        disabled={loading}
+        className="flex-1 bg-transparent outline-none text-slate-200 placeholder-slate-500 disabled:opacity-50 text-sm"
+        autoFocus
+      />
+      <button
+        onClick={handleSend}
+        disabled={!canSend}
+        className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-black disabled:cursor-not-allowed px-5 py-2 rounded-xl text-sm font-medium transition-colors"
+      >
+        {loading ? (
+          <span className="flex gap-0.5 items-center">
+            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0s" }} />
+            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0.15s" }} />
+            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
+          </span>
+        ) : (
+          "Send"
         )}
-
-        {/* Hidden File Input */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-        />
-
-        <input
-          type="text"
-          placeholder="Type your message..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 bg-transparent outline-none text-slate-200 placeholder-slate-400"
-        />
-
-        <button
-          onClick={handleSend}
-          className="ml-3 bg-emerald-500 hover:bg-emerald-600 text-black px-5 py-2 rounded-xl transition"
-        >
-          Send
-        </button>
-      </div>
-
-      {/* Dropdown Menu */}
-      {openMenu && (
-        <div className="absolute bottom-16 left-2 bg-slate-900 border border-slate-700 rounded-xl shadow-lg w-40 overflow-hidden animate-fadeIn">
-          
-          <button
-            onClick={handleUploadClick}
-            className="w-full text-left px-4 py-3 text-sm hover:bg-slate-800 transition"
-          >
-            📄 Choose File
-          </button>
-
-          <button
-            onClick={handleArxivClick}
-            className="w-full text-left px-4 py-3 text-sm hover:bg-slate-800 transition"
-          >
-            📚 arXiv
-          </button>
-
-        </div>
-      )}
+      </button>
     </div>
   );
 }

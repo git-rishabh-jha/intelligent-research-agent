@@ -77,3 +77,51 @@ class SummaryResponse(BaseModel):
 
 class TextSummarizeRequest(BaseModel):
     selected_text: str
+
+
+# ---------------------------------------------------------------------------
+# Chat sessions
+# ---------------------------------------------------------------------------
+
+class ChatMessageResponse(BaseModel):
+    id: int
+    role: str
+    content: str
+    intent: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ChatSessionResponse(BaseModel):
+    id: int
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    message_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class ChatSessionDetail(BaseModel):
+    id: int
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    messages: list[ChatMessageResponse]
+
+    class Config:
+        from_attributes = True
+
+
+class SendMessageRequest(BaseModel):
+    message: str
+
+
+class SendMessageResponse(BaseModel):
+    session_id: int
+    user_message: ChatMessageResponse
+    assistant_message: ChatMessageResponse
+    intent: str

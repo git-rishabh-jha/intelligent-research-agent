@@ -15,6 +15,11 @@ class Users(Base):
     hashed_password = Column(String)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(IST))
     documents = relationship("Documents", back_populates="owner")
+    chat_sessions = relationship(
+        "ChatSession",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
 class Documents(Base):
 
@@ -98,3 +103,38 @@ class DocumentSummary(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(IST))
 
     document = relationship("Documents", back_populates="summaries")
+
+
+class ChatSession(Base):
+    """A conversation session belonging to one user."""
+
+    __tablename__ = "ChatSessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("Users.id"), nullable=False)
+    title = Column(String, default="New Chat", nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(IST))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(IST))
+
+    user = relationship("Users", back_populates="chat_sessions")
+    messages = relationship(
+        "ChatMessage",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.created_at",
+    )
+
+
+class ChatMessage(Base):
+    """A single message (user or assistant) inside a ChatSession."""
+
+    __tablename__ = "ChatMessages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("ChatSessions.id"), nullable=False)
+    role = Column(String, nullable=False)      # "user" | "assistant"
+    content = Column(String, nullable=False)
+    intent = Column(String, nullable=True)     # set on assistant messages
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(IST))
+
+    session = relationship("ChatSession", back_populates="messages")

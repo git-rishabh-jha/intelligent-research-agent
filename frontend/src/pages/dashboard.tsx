@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import DocumentTile from "../components/ui/DocumentTile";
 import DocChatPanel from "../components/chat/DocChatPanel";
 import SummarizePanel from "../components/chat/SummarizePanel";
@@ -17,6 +18,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 
 export default function Dashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [documents, setDocuments] = useState<any[]>([]);
   const [showMenu, setShowMenu] = useState(false);
 
@@ -49,6 +51,17 @@ export default function Dashboard() {
   useEffect(() => {
     loadDocs();
   }, []);
+
+  // Auto-open a document when navigated from chat link (?view=id)
+  useEffect(() => {
+    const viewId = searchParams.get("view");
+    if (!viewId || documents.length === 0) return;
+    const doc = documents.find((d) => d.id === parseInt(viewId, 10));
+    if (doc) {
+      setSearchParams({}, { replace: true });
+      handleView(doc);
+    }
+  }, [searchParams, documents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close upload dropdown when clicking outside
   useEffect(() => {
@@ -168,7 +181,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full p-8 overflow-hidden">
 
       {/* ------------------------------------------------------------------ */}
       {/* HEADER                                                              */}

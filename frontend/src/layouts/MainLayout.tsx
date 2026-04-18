@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { getChatSessions, deleteChatSession, type ChatSession } from "../services/api";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -10,12 +11,39 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(false);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const username = localStorage.getItem("username") || "User";
   const firstLetter = username.charAt(0).toUpperCase();
 
   const isDashboard = location.pathname === "/dashboard";
-  const isChat = location.pathname === "/chat";
+
+  const activeSessionId = (() => {
+    const p = new URLSearchParams(location.search);
+    const v = p.get("session");
+    return v ? parseInt(v, 10) : null;
+  })();
+
+  useEffect(() => {
+    getChatSessions().then(setSessions).catch(() => {});
+  }, [location]);
+
+  const handleNewChat = () => {
+    navigate("/chat");
+  };
+
+  const handleDeleteSession = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setDeletingId(id);
+    try {
+      await deleteChatSession(id);
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+      if (activeSessionId === id) navigate("/chat");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -25,10 +53,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex">
+    <div className="h-screen bg-slate-900 text-slate-100 flex overflow-hidden">
 
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between">
+      <aside className="w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between h-full overflow-y-auto">
 
         {/* Top Section */}
         <div>
@@ -51,14 +79,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
           {/* New Chat Button */}
           <div className="px-4">
             <button
-              onClick={() => navigate("/chat", { replace: false })}
-              className={`w-full text-sm py-2 rounded-lg transition
-                ${
-                  isChat
-                    ? "bg-slate-700"
-                    : "bg-slate-800 hover:bg-slate-700"
-                }
-              `}
+              onClick={handleNewChat}
+              className="w-full text-sm py-2 rounded-lg transition bg-slate-800 hover:bg-slate-700"
             >
               + New Chat
             </button>
@@ -70,18 +92,33 @@ export default function MainLayout({ children }: MainLayoutProps) {
               Recent Chats
             </p>
 
-            <div className="space-y-2">
-              <div className="px-3 py-2 rounded-md bg-slate-800 text-sm truncate cursor-pointer hover:bg-slate-700">
-                AI Research Discussion
-              </div>
-
-              <div className="px-3 py-2 rounded-md text-sm truncate cursor-pointer hover:bg-slate-800">
-                Marketing Strategy Ideas
-              </div>
-
-              <div className="px-3 py-2 rounded-md text-sm truncate cursor-pointer hover:bg-slate-800">
-                Code Optimization Help
-              </div>
+            <div className="space-y-1">
+              {sessions.length === 0 ? (
+                <p className="text-xs text-slate-600 px-3 py-2">No chats yet</p>
+              ) : (
+                sessions.map((s) => {
+                  const isActive = s.id === activeSessionId;
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => navigate(`/chat?session=${s.id}`)}
+                      className={`group flex items-center justify-between px-3 py-2 rounded-md text-sm cursor-pointer transition ${
+                        isActive ? "bg-slate-700 text-white" : "text-slate-300 hover:bg-slate-800"
+                      }`}
+                    >
+                      <span className="truncate flex-1 min-w-0">{s.title}</span>
+                      <button
+                        onClick={(e) => handleDeleteSession(e, s.id)}
+                        disabled={deletingId === s.id}
+                        className="ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity disabled:opacity-30"
+                        title="Delete chat"
+                      >
+                        {deletingId === s.id ? "…" : "×"}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -119,7 +156,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-hidden">
+      <main className="flex-1 overflow-hidden flex flex-col">
         {children}
       </main>
 

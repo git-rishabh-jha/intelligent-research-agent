@@ -147,6 +147,94 @@ export const getFullSummary = async (docId: number): Promise<SummaryResponse> =>
   return res.json();
 };
 
+// ---------------------------------------------------------------------------
+// Chat sessions
+// ---------------------------------------------------------------------------
+
+export interface ChatSession {
+  id: number;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+}
+
+export interface ChatMessage {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+  intent?: string | null;
+  created_at: string;
+}
+
+export interface ChatSessionDetail extends ChatSession {
+  messages: ChatMessage[];
+}
+
+export interface SendMessageResponse {
+  session_id: number;
+  user_message: ChatMessage;
+  assistant_message: ChatMessage;
+  intent: string;
+}
+
+export const createChatSession = async (): Promise<ChatSession> => {
+  const res = await fetch(`${API_BASE}/chat/sessions`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Failed to create session");
+  }
+  return res.json();
+};
+
+export const getChatSessions = async (): Promise<ChatSession[]> => {
+  const res = await fetch(`${API_BASE}/chat/sessions`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) return [];
+  return res.json();
+};
+
+export const getChatSession = async (id: number): Promise<ChatSessionDetail> => {
+  const res = await fetch(`${API_BASE}/chat/sessions/${id}`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Session not found");
+  }
+  return res.json();
+};
+
+export const sendChatMessage = async (
+  sessionId: number,
+  message: string
+): Promise<SendMessageResponse> => {
+  const res = await fetch(`${API_BASE}/chat/sessions/${sessionId}/message`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Failed to send message");
+  }
+  return res.json();
+};
+
+export const deleteChatSession = async (id: number): Promise<void> => {
+  await fetch(`${API_BASE}/chat/sessions/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+};
+
 export const summarizeSelectedText = async (
   docId: number,
   selectedText: string
