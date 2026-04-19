@@ -3,7 +3,8 @@ node_modules/
 
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
 
 # Environment
 .env
@@ -14,15 +15,19 @@ uploads/
 # Database
 *.db
 
-# Vite
+# Build
 dist/
 
 # OS
 .DS_Store
 Thumbs.db
 
-#VS CODE 
-.vscode
+# VS Code
+.vscode/
 
-# document store
-/faiss_store
+# FAISS / vector store
+faiss_store/
+backend/faiss_store/
+
+# Docker (optional)
+*.log
