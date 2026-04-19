@@ -19,9 +19,10 @@ RAM guidance:
     CHAT_MODEL = "llama3.2:1b"
 """
 
+import os
 import httpx
 
-OLLAMA_BASE = "http://localhost:11434"
+OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 EMBED_MODEL = "nomic-embed-text"
 CHAT_MODEL = "llama3.2:3b"
 
@@ -66,7 +67,7 @@ def generate(
     Surfaces Ollama-specific error messages (e.g. out-of-memory) so callers
     receive actionable feedback instead of a generic HTTP error string.
     """
-    options: dict = {"num_gpu": 0}
+    options: dict = {"num_gpu": int(os.environ.get("OLLAMA_NUM_GPU", "0"))}
     if num_predict is not None:
         options["num_predict"] = num_predict
 

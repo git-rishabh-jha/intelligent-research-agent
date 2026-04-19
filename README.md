@@ -159,20 +159,50 @@ Intelligent-Research-Agent/
 
 ## ⚙️ Getting Started
 
-### Prerequisites
+### Option A — Docker (recommended, zero setup)
+
+> Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) with Docker Compose v2.
+
+```bash
+git clone https://github.com/your-username/Intelligent-Research-Agent.git
+cd Intelligent-Research-Agent
+docker compose up --build
+```
+
+That's it. On first run, Docker will:
+1. Pull the `ollama/ollama` image and start the LLM server
+2. Automatically download `llama3.2:3b` and `nomic-embed-text` models (~2.5 GB total)
+3. Build and start the FastAPI backend
+4. Build the React app and serve it via nginx
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:8000 |
+| Ollama | http://localhost:11434 |
+
+All data (database, uploaded files, FAISS indices, Ollama models) is persisted in named Docker volumes — your data survives container restarts.
+
+> **GPU acceleration**: If you have a CUDA GPU and `nvidia-container-toolkit` installed, set `OLLAMA_NUM_GPU=1` in the `backend` service environment in `docker-compose.yml`.
+
+---
+
+### Option B — Manual setup
+
+#### Prerequisites
 
 - Python 3.10+
 - Node.js 18+
 - [Ollama](https://ollama.com) installed and running
 
-### 1. Pull required models
+#### 1. Pull required models
 
 ```bash
 ollama pull llama3.2:3b
 ollama pull nomic-embed-text
 ```
 
-### 2. Start the backend
+#### 2. Start the backend
 
 ```bash
 cd backend
@@ -182,7 +212,7 @@ uvicorn main:app --reload
 
 Backend runs at `http://127.0.0.1:8000`
 
-### 3. Start the frontend
+#### 3. Start the frontend
 
 ```bash
 cd frontend
@@ -192,7 +222,7 @@ npm run dev
 
 Frontend runs at `http://localhost:5173`
 
-### 4. Open the app
+#### 4. Open the app
 
 Navigate to `http://localhost:5173`, register an account, and start uploading papers.
 
@@ -242,3 +272,4 @@ User Query
 
 **Rishabh Jha**
 
+> Built as a full-stack AI engineering project demonstrating end-to-end LLM integration, retrieval-augmented generation, and modern web development — all running locally without any cloud dependency.

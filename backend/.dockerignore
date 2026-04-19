@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.db
+uploads/
+faiss_store/
+.env
+.venv
+venv/

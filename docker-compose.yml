@@ -1,0 +1,79 @@
+services:
+
+  # ── Ollama LLM server ─────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ira-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 15s
+    restart: unless-stopped
+
+  # ── One-time model pull (runs once, exits cleanly) ────────────────────────
+  ollama-setup:
+    image: ollama/ollama:latest
+    container_name: ira-ollama-setup
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: >
+      /bin/sh -c "
+        echo '>>> Pulling llama3.2:3b ...' &&
+        ollama pull llama3.2:3b &&
+        echo '>>> Pulling nomic-embed-text ...' &&
+        ollama pull nomic-embed-text &&
+        echo '>>> All models ready.'
+      "
+    restart: "no"
+
+  # ── FastAPI backend ───────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ira-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - DATABASE_URL=sqlite:////app/db/research_assistant.db
+      # Set to 1 if your machine has a CUDA GPU and you installed nvidia-container-toolkit
+      - OLLAMA_NUM_GPU=0
+    volumes:
+      - uploads_data:/app/uploads
+      - faiss_data:/app/faiss_store
+      - db_data:/app/db
+    restart: unless-stopped
+
+  # ── React frontend (nginx) ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ira-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# ── Named volumes (data persists across restarts) ─────────────────────────
+volumes:
+  ollama_data:
+  uploads_data:
+  faiss_data:
+  db_data:

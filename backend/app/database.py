@@ -1,8 +1,8 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# SQLite database file
-DATABASE_URL = "sqlite:///./research_assistant.db"
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./research_assistant.db")
 
 # Create engine
 engine = create_engine(
