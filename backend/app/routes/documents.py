@@ -11,6 +11,7 @@ from app import models, schemas
 from app.routes.auth import get_current_user
 from app.utils.rag_pipeline import index_document_task
 from app.utils.faiss_store import delete_document as delete_faiss_index
+from app.utils.pdf_validator import is_research_paper
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 UPLOAD_FOLDER = "uploads"
@@ -29,13 +30,19 @@ def upload_document(
     current_user: models.Users = Depends(get_current_user),
 ):
     if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDFs allowed")
+        raise HTTPException(status_code=400, detail="Only PDFs are allowed.")
 
     unique_name = f"{uuid.uuid4()}_{file.filename}"
     filepath = os.path.join(UPLOAD_FOLDER, unique_name)
 
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
+    # Validate that the uploaded PDF is a research paper before persisting
+    valid, reason = is_research_paper(filepath)
+    if not valid:
+        os.remove(filepath)
+        raise HTTPException(status_code=422, detail=reason)
 
     document = models.Documents(
         filename=file.filename,

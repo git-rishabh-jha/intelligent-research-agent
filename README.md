@@ -28,6 +28,8 @@ No cloud. No API keys. No data leaving your machine.
 
 ### 📂 Document Management
 - Upload, view, download and delete PDF research papers
+- **Research paper validator** — rejects non-academic PDFs before they are saved, using a heading-based scoring system (Abstract, Introduction, Methods, Results, References, etc.)
+- Animated upload toast — spinner → green ✓ on success / red ✗ on rejection, auto-dismisses after 2 s
 - In-browser PDF viewer with page navigation and zoom controls
 - Automatic background indexing on upload — ready to query in seconds
 
@@ -131,7 +133,8 @@ Intelligent-Research-Agent/
 │   │   │   ├── rag_pipeline.py  # FAISS index/query pipeline
 │   │   │   ├── summarizer.py    # Map-reduce summarization
 │   │   │   ├── ollama_client.py # Ollama HTTP wrapper
-│   │   │   └── faiss_store.py   # FAISS persistence helpers
+│   │   │   ├── faiss_store.py   # FAISS persistence helpers
+│   │   │   └── pdf_validator.py # Research paper heading-based validator
 │   │   ├── models.py            # SQLAlchemy models
 │   │   └── schemas.py           # Pydantic request/response schemas
 │   └── main.py                  # FastAPI app + startup backfill
@@ -149,6 +152,7 @@ Intelligent-Research-Agent/
         │   │   ├── DocChatPanel.tsx   # Per-doc RAG chat panel
         │   │   └── SummarizePanel.tsx # Summarize panel (full + selected text)
         │   └── ui/
+        │       └── UploadToast.tsx    # Animated upload status toast
         ├── layouts/
         │   └── MainLayout.tsx    # Sidebar with live session history
         └── services/
@@ -255,6 +259,13 @@ User Query
 - **Long papers**: map-reduce — each 2,500-char chunk summarized independently, then synthesized into one final summary
 - Results cached in SQLite — subsequent loads are instant
 
+### Research Paper Validator
+1. PDF is saved to a temporary path on upload
+2. First 6 pages are scanned with **pdfplumber** for short heading-length lines (≤ 90 chars)
+3. Each line is matched against 19 heading families (Abstract, Introduction, Methods, Results, References, DOI/journal metadata, etc.)
+4. **Abstract** = 2 pts; all other headings = 1 pt each; threshold = **3 pts to pass**
+5. Rejected files are deleted immediately — nothing is written to the database
+
 ---
 
 ## 🖥️ UI Highlights
@@ -264,7 +275,8 @@ User Query
 - **Optimistic UI** — user messages appear instantly before the server responds
 - **Intent badges** on every AI message (color-coded by type)
 - **Live session sidebar** — last 3 chats loaded from DB, hover-to-delete, highlights active session
-- **Clickable paper links** — paper names in chat navigate directly to the PDF viewer
+- **Clickable paper links** — paper names in chat responses navigate directly to the PDF viewer
+- **Upload toast** — animated bottom-right notification: spinner while validating → green ✓ on success / red ✗ on rejection, fades out automatically after 2 s
 
 ---
 

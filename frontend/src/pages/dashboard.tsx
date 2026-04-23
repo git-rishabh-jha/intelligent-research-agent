@@ -1,8 +1,9 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import DocumentTile from "../components/ui/DocumentTile";
 import DocChatPanel from "../components/chat/DocChatPanel";
 import SummarizePanel from "../components/chat/SummarizePanel";
+import UploadToast, { type UploadToastStatus } from "../components/ui/UploadToast";
 import {
   fetchDocuments,
   uploadDocument,
@@ -33,6 +34,10 @@ export default function Dashboard() {
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Upload toast
+  const [toast, setToast] = useState<{ status: UploadToastStatus; errorMessage?: string } | null>(null);
+  const hideToast = useCallback(() => setToast(null), []);
 
   // Right-side panel: "chat" | "summarize" | null (mutually exclusive)
   const [activePanel, setActivePanel] = useState<"chat" | "summarize" | null>(null);
@@ -99,11 +104,19 @@ export default function Dashboard() {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Reset input so the same file can be re-selected after a rejection
+    e.target.value = "";
+
+    setToast({ status: "checking" });
     try {
       await uploadDocument(file);
+      setToast({ status: "success" });
       loadDocs();
-    } catch {
-      alert("Upload failed");
+    } catch (err: any) {
+      setToast({
+        status: "error",
+        errorMessage: err.message || "This file is not a research paper.",
+      });
     }
   };
 
@@ -182,6 +195,15 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col h-full p-8 overflow-hidden">
+
+      {/* ── Upload toast (fixed overlay, always rendered when active) ── */}
+      {toast && (
+        <UploadToast
+          status={toast.status}
+          errorMessage={toast.errorMessage}
+          onDone={hideToast}
+        />
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* HEADER                                                              */}

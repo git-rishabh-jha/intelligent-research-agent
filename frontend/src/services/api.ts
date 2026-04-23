@@ -57,6 +57,11 @@ export const uploadDocument = async (file: File) => {
     body: formData
   });
 
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Upload failed" }));
+    throw new Error(err.detail || "Upload failed");
+  }
+
   return res.json();
 };
 
